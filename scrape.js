@@ -169,6 +169,9 @@ async function fetchAgencyData(url) {
     if (d.includes("hr")) {
       dataObject.hourly = d
     }
+    if (d.includes("founded") || d.includes("Founded")) {
+      dataObject.founded = d
+    }
     if (isInFormatForEmploy(d) && !d.includes("$")) {
       dataObject.employees = d
     }
@@ -208,6 +211,19 @@ async function fetchAgencyData(url) {
   })
 
   dataObject.industries = transformedIndustries.join(",")
+
+  // GET Agency Focus
+  await page.waitForSelector('button[data-id="focus"]')
+  await page.click('button[data-id="focus"]')
+  await new Promise((resolve) => setTimeout(resolve, 3500))
+  const focusDetails = await page.$$eval(".chart-legend--item", (details) => details.map((detail) => detail.innerText))
+
+  let transformedFocus = await focusDetails.map((client) => {
+    let [name, percentage] = client.split("\n")
+    return `${percentage} ${name}`
+  })
+
+  dataObject.focus = transformedFocus.join(",")
 
   // Get Agency Packages URL
   const packageUrlData = await page.$$eval("#packages-link", (details) => details.map((detail) => detail.getAttribute("href")))
@@ -289,7 +305,7 @@ async function fetchAgencyData(url) {
     }
   })
 
-  //let shortArray = cleanedUrls.slice(0, 100)
+  //let shortArray = cleanedUrls.slice(0, 5)
   let shortArray = cleanedUrls
 
   let agencyData = []
